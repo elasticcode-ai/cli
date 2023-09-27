@@ -1,0 +1,84 @@
+version: '1.0'
+
+# In this configuration there are no nodes or agents, just processors
+# The scheduler will assign processors to free resources of its nodes
+# Nodes are associated with the scheduler separately
+network:
+  name: network-1
+  scheduler:
+    name: sched1
+    strategy: BALANCED
+  queues:
+    pyfi.queue1:
+      message_ttl: 200000
+      durable: true
+      expires: 200
+    pyfi.queue2:
+      message_ttl: 200000
+      expires: 200
+      durable: true
+    pyfi.queue3:
+      message_ttl: 200000
+      expires: 200
+      durable: true
+  processors:
+      proc3: 
+        # These properties allow the code repo for this processor 'gitrepo' to be
+        # installed in a container image that already has pyfi inside it
+        # The user code then runs safely inside the container without harming the host system 
+        container_image: pyfi/processor
+        use_container: true
+        detached: true
+
+        branch: main
+        pyfirepo: 'https://radiantone:xxxx@github.com/radiantone/pyfi-private#egg=pyfi'
+        gitrepo: 'https://github.com/radiantone/pyfi-processors#egg=ext-processor'
+        commit:
+        module: ext.processors.sample
+        beat: true
+        cpus: 5
+        sockets:
+          ext.processors.sample.emit_one:
+            interval: -1
+            queue: 
+              name: pyfi.queue1
+            task:
+              function: 
+                name: emit_one
+          ext.processors.sample.emit_two:
+            queue: 
+              name: pyfi.queue3
+            task:
+              function: 
+                name: emit_two       
+      proc4: 
+        branch: main
+        pyfirepo: 'https://radiantone:xxxx@github.com/radiantone/pyfi-private#egg=pyfi'
+        gitrepo: 'https://github.com/radiantone/pyfi-processors#egg=ext-processor'
+        commit:
+        module: ext.processors.sample
+        beat: false
+        cpus: 5
+        sockets:
+          ext.processors.sample.add_two:
+            queue: 
+              name: pyfi.queue2
+            task:
+              function: 
+                name: add_two
+                arguments: true
+                resetonexecute: true
+
+  plugs:
+    plug1:
+      source: ext.processors.sample.emit_one
+      target: ext.processors.sample.add_two
+      argument: one
+      queue:
+        name: pyfi.queue4
+    plug2:
+      source: ext.processors.sample.emit_two
+      target: ext.processors.sample.add_two
+      argument: two
+      queue:
+        name: pyfi.queue5
