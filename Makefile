@@ -16,6 +16,12 @@ clean:
 docs:
 	make -C docs html
 
+.PHONY: build
+build:
+	. venv/bin/activate && ( \
+        python setup.py install ; \
+        )
+
 .PHONY: install
 install:
 	. venv/bin/activate && ( \
@@ -23,10 +29,6 @@ install:
         python setup.py install ; \
         python setup.py clean \
         )
-
-.PHONY: build
-build:
-	SOCKETIO=http://localhost quasar build
 
 .PHONY: all
 all: clean lint format build
