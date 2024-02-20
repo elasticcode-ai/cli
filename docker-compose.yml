@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+
+  cli:
+    image: elasticcode.ai/cli:local
+    container_name: cli
+    build:
+      context: .

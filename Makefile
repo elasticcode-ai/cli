@@ -1,35 +1,19 @@
+
 .DEFAULT_GOAL := all
-
-.PHONY: format
-format:
-	eslint --fix "src/**/*.{js,vue}"
-
-.PHONY: lint
-lint:
-	eslint "src/**/*.{js,vue}"
 
 .PHONY: clean
 clean:
 	@echo "Cleaning"
+	docker ps -a|grep -v CONTAINER|awk '{ print "docker stop "$1}'| true | sh 2> /dev/null
+	docker ps -a|grep -v CONTAINER|awk '{ print "docker rm "$1}'| true | sh 2> /dev/null
 
-.PHONY: docs
-docs:
-	make -C docs html
+.PHONY: up
+up:
+	docker compose up
 
 .PHONY: build
 build:
-	. venv/bin/activate && ( \
-        python setup.py install ; \
-        )
-
-.PHONY: install
-install:
-	. venv/bin/activate && ( \
-        pip install -r requirements.txt ; \
-        python setup.py install ; \
-        python setup.py clean \
-        )
+	docker buildx bake
 
 .PHONY: all
-all: clean lint format build
-	git status
+all: clean build
